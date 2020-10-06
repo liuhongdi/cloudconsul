@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 @RestController
 @RequestMapping("/home")
@@ -36,8 +41,38 @@ public class HomeController {
     //test api
     @GetMapping("/hello")
     public String hello() {
+        /*
+        try {
+            InetAddress addr = InetAddress.getLocalHost();
+            System.out.println("ip:"+addr.getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        */
+        String ip = "";
+        try {
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface current = interfaces.nextElement();
+            if (!current.isUp() || current.isLoopback() || current.isVirtual()) continue;
+            Enumeration<InetAddress> addresses = current.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress addr = addresses.nextElement();
+                if (addr.isLoopbackAddress()) continue;
+                /*
+                if (condition.isAcceptableAddress(addr)) {
+                    return addr;
+                }
+                */
+                ip = addr.getHostAddress();
+            }
+        }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        System.out.println("ip:"+ip);
         //return discoveryClient.getInstances("consul");
-        String res = "name:"+name+";port:"+port;
+        String res = "ip:"+ip+";name:"+name+";port:"+port;
         return res;
     }
 }
